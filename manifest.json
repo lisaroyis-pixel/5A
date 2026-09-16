@@ -1,0 +1,9 @@
+{
+  "name": "TeachFlow 5A",
+  "short_name": "TeachFlow",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f1e7",
+  "theme_color": "#315f5a",
+  "icons": []
+}
