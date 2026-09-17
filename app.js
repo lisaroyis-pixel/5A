@@ -22,14 +22,32 @@ function units(){shell("Matières / Unités",`<div class="grid g4">${subjects.ma
 function prayers(){shell("Prières",`<div class="card"><h3>Prière du jour</h3><textarea id="pr" placeholder="Écrire ou coller la prière…">${esc(S.notes.prayer||"")}</textarea></div>`);$("#pr").oninput=e=>{S.notes.prayer=e.target.value;save()}}
 function students(){shell("Élèves",`<div class="card"><input class="search" id="sq" placeholder="🔎 Rechercher un élève…"></div><div class="student-grid" id="sg">${D.students.map(n=>`<div class="student" data-name="${esc(n)}">${esc(n)}<div class="muted" style="font-size:12px">${D.birthdays[n]?"🎂 "+D.birthdays[n]:""}</div></div>`).join("")}</div>`);$("#sq").oninput=e=>document.querySelectorAll("[data-name]").forEach(x=>x.style.display=x.dataset.name.toLowerCase().includes(e.target.value.toLowerCase())?"":"none")}
 function hh(){
- shell("HH / RÉUSSIR",`<div class="card hero"><div><h3>Donner un HH</h3><div class="muted">1. Choisis l’élève ou Tous. 2. Choisis le HH. C’est tout.</div></div><div class="points">${S.hh.length} observations</div></div>
- <div class="card"><input class="search" id="hs" placeholder="🔎 Trouver un élève…"><div class="student-grid" id="hsg" style="margin-top:12px"><button class="student all" data-hstu="ALL">✓ Tous<br><span class="muted">Toute la classe</span></button>${D.students.map(n=>`<button class="student" data-hstu="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>
+ shell("HH / RÉUSSIR",`<div class="card hero"><div><h3>Donner un HH</h3><div class="muted">1. Choisis un ou plusieurs élèves, ou Tous. 2. Choisis le HH. C’est tout.</div></div><div class="points">${S.hh.length} observations</div></div>
+ <div class="card"><input class="search" id="hs" placeholder="🔎 Trouver un élève…"><div class="student-grid" id="hsg" style="margin-top:12px"><button class="student all" data-all="1">✓ Tous<br><span class="muted">Toute la classe</span></button>${D.students.map(n=>`<button class="student" data-hstu="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>
  <div class="card"><h3>Choisir le HH</h3><div id="chosen" class="muted">Aucun élève choisi</div><div class="hh-grid" style="margin-top:12px">${HH.map((h,i)=>`<button class="hh" data-hh="${i}" disabled><strong>${esc(h)}</strong></button>`).join("")}</div><div id="ok"></div></div>
  <div class="card"><h3>Dernières observations</h3><table class="history"><tbody>${S.hh.slice(0,12).map(x=>`<tr><td><b>${esc(x.student)}</b></td><td>${esc(x.hh)}</td><td>${new Date(x.date).toLocaleDateString("fr-CA")}</td></tr>`).join("")||'<tr><td class="muted">Aucune observation.</td></tr>'}</tbody></table></div>`);
- let chosen="";
- document.querySelectorAll("[data-hstu]").forEach(b=>b.onclick=()=>{chosen=b.dataset.hstu;document.querySelectorAll("[data-hstu]").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#chosen").textContent=chosen==="ALL"?"Toute la classe sélectionnée":chosen+" sélectionné(e)";document.querySelectorAll("[data-hh]").forEach(x=>x.disabled=false)});
- $("#hs").oninput=e=>document.querySelectorAll("[data-hstu]:not(.all)").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(e.target.value.toLowerCase())?"":"none");
- document.querySelectorAll("[data-hh]").forEach(b=>b.onclick=()=>{if(!chosen)return;let h=HH[+b.dataset.hh], targets=chosen==="ALL"?D.students:[chosen];targets.forEach(student=>S.hh.unshift({student,hh:h,date:new Date().toISOString()}));save();$("#ok").innerHTML=`<div class="success">✓ ${esc(h)} ajouté ${chosen==="ALL"?"à toute la classe":"à "+esc(chosen)}.</div>`});
+ let chosen=new Set();
+ const allBtn=document.querySelector("[data-all]");
+ const studentBtns=[...document.querySelectorAll("[data-hstu]")];
+ function refreshSelection(){
+   studentBtns.forEach(b=>b.classList.toggle("sel",chosen.has(b.dataset.hstu)));
+   const allSelected=D.students.length>0 && D.students.every(n=>chosen.has(n));
+   allBtn.classList.toggle("sel",allSelected);
+   $("#chosen").textContent=chosen.size===0?"Aucun élève choisi":allSelected?`Toute la classe sélectionnée (${chosen.size})`:`${chosen.size} élève${chosen.size>1?"s":""} sélectionné${chosen.size>1?"s":""}`;
+   document.querySelectorAll("[data-hh]").forEach(x=>x.disabled=chosen.size===0);
+ }
+ studentBtns.forEach(b=>b.onclick=()=>{const n=b.dataset.hstu;chosen.has(n)?chosen.delete(n):chosen.add(n);refreshSelection()});
+ allBtn.onclick=()=>{const allSelected=D.students.every(n=>chosen.has(n));chosen=allSelected?new Set():new Set(D.students);refreshSelection()};
+ $("#hs").oninput=e=>studentBtns.forEach(x=>x.style.display=x.textContent.toLowerCase().includes(e.target.value.toLowerCase())?"":"none");
+ document.querySelectorAll("[data-hh]").forEach(b=>b.onclick=()=>{
+   if(!chosen.size)return;
+   let h=HH[+b.dataset.hh],targets=[...chosen];
+   targets.forEach(student=>S.hh.unshift({student,hh:h,date:new Date().toISOString()}));
+   save();
+   $("#ok").innerHTML=`<div class="success">✓ ${esc(h)} ajouté à ${targets.length===D.students.length?"toute la classe":targets.length+" élève"+(targets.length>1?"s":"")}.</div>`;
+   chosen=new Set();refreshSelection();
+ });
+ refreshSelection();
 }
 function classhub(){shell("Centre de classe",`<div class="grid g4">${["⏱️ Minuterie","🎲 Élève au hasard","🔊 Niveau de voix","👥 Groupes","🎯 Points de classe","📝 Message"].map(x=>`<button class="bigbtn">${x}</button>`).join("")}</div><div class="card"><h3>Points de classe</h3><div class="points">${S.points||0}</div><button class="primary" id="plus">+ 1</button></div>`);$("#plus").onclick=()=>{S.points=(S.points||0)+1;save();classhub()}}
 function resources(){shell("Ressources",`<div class="card"><h3>Mes liens</h3><textarea id="res" placeholder="Colle ici tes liens et notes…">${esc(S.notes.resources||"")}</textarea></div>`);$("#res").oninput=e=>{S.notes.resources=e.target.value;save()}}
