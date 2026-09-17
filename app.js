@@ -8,8 +8,8 @@ const subjects=["Français","Mathématiques","Sciences","Enseignement religieux"
 function shell(t,h){title.textContent=t;app.innerHTML=h}
 function today(){
  let d=new Date(), key=d.toISOString().slice(0,10);
- shell("Aujourd’hui",`<div class="card hero"><div><h3>${d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"})}</h3><div class="muted">Classe 5A · TeachFlow</div></div><div class="points">${S.hh.filter(x=>x.date.slice(0,10)===key).length} HH aujourd’hui</div></div>
- <div class="grid g4">${["Planifier ma journée","Ajouter un HH","Ouvrir mes unités","Centre de classe"].map((x,i)=>`<button class="bigbtn" data-jump="${["week","hh","units","classhub"][i]}">${x}</button>`).join("")}</div>`);
+ shell("Aujourd’hui",`<div class="card hero"><div><h3>${d.toLocaleDateString("fr-CA",{weekday:"long",day:"numeric",month:"long"})}</h3><div class="muted">Classe 5A · TeachFlow</div></div><div class="points">${S.hh.filter(x=>x.date.slice(0,10)===key).length} observations aujourd’hui</div></div>
+ <div class="grid g4">${["Planifier ma journée","Ajouter une observation","Ouvrir mes unités","Centre de classe"].map((x,i)=>`<button class="bigbtn" data-jump="${["week","hh","units","classhub"][i]}">${x}</button>`).join("")}</div>`);
  document.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>go(b.dataset.jump));
 }
 function week(){
@@ -22,9 +22,9 @@ function units(){shell("Matières / Unités",`<div class="grid g4">${subjects.ma
 function prayers(){shell("Prières",`<div class="card"><h3>Prière du jour</h3><textarea id="pr" placeholder="Écrire ou coller la prière…">${esc(S.notes.prayer||"")}</textarea></div>`);$("#pr").oninput=e=>{S.notes.prayer=e.target.value;save()}}
 function students(){shell("Élèves",`<div class="card"><input class="search" id="sq" placeholder="🔎 Rechercher un élève…"></div><div class="student-grid" id="sg">${D.students.map(n=>`<div class="student" data-name="${esc(n)}">${esc(n)}<div class="muted" style="font-size:12px">${D.birthdays[n]?"🎂 "+D.birthdays[n]:""}</div></div>`).join("")}</div>`);$("#sq").oninput=e=>document.querySelectorAll("[data-name]").forEach(x=>x.style.display=x.dataset.name.toLowerCase().includes(e.target.value.toLowerCase())?"":"none")}
 function hh(){
- shell("HH / RÉUSSIR",`<div class="card hero"><div><h3>Donner un HH</h3><div class="muted">1. Choisis un ou plusieurs élèves, ou Tous. 2. Choisis le HH. C’est tout.</div></div><div class="points">${S.hh.length} observations</div></div>
+ shell("Habitudes de travail",`<div class="card hero"><div><h3>Habitudes de travail</h3></div><div class="points">${S.hh.length} observations</div></div>
  <div class="card"><input class="search" id="hs" placeholder="🔎 Trouver un élève…"><div class="student-grid" id="hsg" style="margin-top:12px"><button class="student all" data-all="1">✓ Tous<br><span class="muted">Toute la classe</span></button>${D.students.map(n=>`<button class="student" data-hstu="${esc(n)}">${esc(n)}</button>`).join("")}</div></div>
- <div class="card"><h3>Choisir le HH</h3><div id="chosen" class="muted">Aucun élève choisi</div><div class="hh-grid" style="margin-top:12px">${HH.map((h,i)=>`<button class="hh" data-hh="${i}" disabled><strong>${esc(h)}</strong></button>`).join("")}</div><div id="ok"></div></div>
+ <div class="card"><h3>Habitude observée</h3><div id="chosen" class="muted">Aucun élève choisi</div><div class="hh-grid" style="margin-top:12px">${HH.map((h,i)=>`<button class="hh" data-hh="${i}" disabled><strong>${esc(h)}</strong></button>`).join("")}</div><div id="ok"></div></div>
  <div class="card"><h3>Dernières observations</h3><table class="history"><tbody>${S.hh.slice(0,12).map(x=>`<tr><td><b>${esc(x.student)}</b></td><td>${esc(x.hh)}</td><td>${new Date(x.date).toLocaleDateString("fr-CA")}</td></tr>`).join("")||'<tr><td class="muted">Aucune observation.</td></tr>'}</tbody></table></div>`);
  let chosen=new Set();
  const allBtn=document.querySelector("[data-all]");
